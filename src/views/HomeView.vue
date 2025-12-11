@@ -3,12 +3,9 @@
 import { supabase } from '@/lib/supabase'
 import { ref, onMounted } from 'vue'
 
-interface Todo {
-    id: number
-    task: string
-    is_complete: boolean
-    created_at: string
-}
+import type { Database } from '@/types/todo'
+
+type Todo = Database['public']['Tables']['todos']['Row']
 
 const newTodo = ref('')
 const todos = ref<Todo[]>([])
@@ -32,9 +29,9 @@ const addTodo = async () => {
         return
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('todos')
-        .insert({ task: newTodo.value })
+        .insert({ title: newTodo.value })
 
     if (error) {
         console.error('Error adding todo:', error)
@@ -47,14 +44,14 @@ const addTodo = async () => {
 const toggleStatus = async (todo: Todo) => {
     const { error } = await supabase
         .from('todos')
-        .update({ is_complete: todo.is_complete })
+        .update({ is_completed: todo.is_completed })
         .eq('id', todo.id) // Filter: WHERE id = todo.id
 
     if (error) {
         console.error('Error updating todo:', error)
     } else {
         // Update state lokal
-        // todo.is_complete = todo.is_complete
+        // todo.is_completed = todo.is_completed
         getTodos()
     }
 }
@@ -90,9 +87,9 @@ onMounted(() => {
         <h1>Todo List</h1>
         <ul>
             <li v-for="todo in todos" :key="todo.id">
-                {{ todo.task }}
+                {{ todo.title }}
                 <!-- checkbox to update status -->
-                <input type="checkbox" v-model="todo.is_complete" @change="toggleStatus(todo)" />
+                <input type="checkbox" v-model="todo.is_completed" @change="toggleStatus(todo)" />
                 <!-- delete button -->
                 <button @click="deleteTodo(todo.id)">Delete</button>
             </li>
