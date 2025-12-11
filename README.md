@@ -1,48 +1,100 @@
-# belajar-supabase
+# Belajar Supabase
 
-This template should help get you started developing with Vue 3 in Vite.
+Project ini adalah contoh implementasi Vue 3 dengan Supabase, mencakup setup database, autentikasi, dan operasi CRUD sederhana.
 
-## Recommended IDE Setup
+## Panduan Setup Supabase
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+Ikuti langkah-langkah berikut untuk mengatur backend Supabase dari awal.
 
-## Recommended Browser Setup
+### 1. Setup Supabase CLI
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Install Supabase CLI sebagai dependency dev di project Anda:
 
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```bash
+npm install supabase --save-dev
 ```
 
-### Compile and Hot-Reload for Development
+### 2. Login ke Supabase
 
-```sh
-npm run dev
+Login menggunakan akun Supabase Anda:
+
+```bash
+npx supabase login
 ```
 
-### Type-Check, Compile and Minify for Production
+### 3. Initialize Supabase
 
-```sh
-npm run build
+Inisialisasi konfigurasi Supabase di project lokal (jika belum):
+
+```bash
+npx supabase init
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### 4. Membuat Migration
 
-```sh
-npm run lint
+Buat file migrasi baru untuk skema database Anda:
+
+```bash
+npx supabase migration new buat_table_todo
+```
+
+Setelah file dibuat di `supabase/migrations/`, isi dengan SQL query Anda. Contoh untuk tabel `todos`:
+
+```sql
+create table todos (
+    id serial primary key,
+    title text not null,
+    is_completed boolean default false,
+    created_at timestamp with time zone default now()
+);
+```
+
+### 5. Link Project
+
+Hubungkan project lokal dengan project di dashboard Supabase. Anda bisa mendapatkan `project-ref` dari URL dashboard Supabase (`https://supabase.com/dashboard/project/<project-ref>`).
+
+```bash
+npx supabase link --project-ref <your-project-ref>
+```
+
+### 6. Push Database ke Supabase
+
+Push migrasi lokal Anda ke database remote Supabase:
+
+```bash
+npx supabase db push
+```
+
+### 7. Generate Type Definition
+
+Generate tipe TypeScript dari schema database Anda untuk type safety. Sesuaikan path output sesuai struktur project Anda (contoh di sini ke `src/types/todo.ts`):
+
+```bash
+npx supabase gen types typescript --linked > src/types/todo.ts
+```
+
+### 8. Implementasi di Vue
+
+Gunakan tipe yang sudah digenerate di dalam komponen Vue Anda.
+
+Contoh `src/lib/supabase.ts` (Client Initialization):
+
+```typescript
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+```
+
+Contoh Penggunaan di Component:
+
+```typescript
+import type { Database } from '@/types/todo'
+
+type Todo = Database['public']['Tables']['todos']['Row']
+
+// Gunakan tipe Todo untuk state atau prop
+const todos = ref<Todo[]>([])
 ```
