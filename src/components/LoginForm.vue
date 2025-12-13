@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue"
+import { ref, type HTMLAttributes } from "vue"
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,10 +16,57 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { supabase } from "@/lib/supabase"
 
 const props = defineProps<{
   class?: HTMLAttributes["class"]
 }>()
+
+const email = ref('')
+const password = ref('')
+const loading = ref(false)
+
+const handleRegister = async () => {
+  try {
+    loading.value = true
+    const { error } = await supabase.auth.signUp({
+      email: email.value,
+      password: password.value,
+      options: {
+        data: {
+          name: 'John Doe',
+          gender: 'male',
+        },
+      },
+    })
+    if (error) throw error
+    alert('Check your email for the login link!')
+  } catch (error) {
+    if (error instanceof Error) {
+      alert(error.message)
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleLogin = async () => {
+  try {
+    loading.value = true
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.value,
+      password: password.value,
+    })
+    if (error) throw error
+    alert('Login successful!')
+  } catch (error) {
+    if (error instanceof Error) {
+      alert(error.message)
+    }
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -32,39 +79,31 @@ const props = defineProps<{
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form>
+        <form :disabled="loading">
           <FieldGroup>
             <Field>
               <FieldLabel for="email">
                 Email
               </FieldLabel>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-              />
+              <Input id="email" type="email" placeholder="m@example.com" required v-model="email" />
             </Field>
             <Field>
               <div class="flex items-center">
                 <FieldLabel for="password">
                   Password
                 </FieldLabel>
-                <a
-                  href="#"
-                  class="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                >
+                <a href="#" class="ml-auto inline-block text-sm underline-offset-4 hover:underline">
                   Forgot your password?
                 </a>
               </div>
-              <Input id="password" type="password" required />
+              <Input id="password" type="password" required v-model="password" />
             </Field>
             <Field>
-              <Button type="submit">
+              <Button @click.prevent="handleLogin" :disabled="loading">
                 Login
               </Button>
-              <Button variant="outline" type="button">
-                Login with Google
+              <Button @click.prevent="handleRegister" variant="outline" :disabled="loading">
+                Register
               </Button>
               <FieldDescription class="text-center">
                 Don't have an account?
